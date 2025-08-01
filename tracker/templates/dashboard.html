@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    <h2 class="mb-4">Welcome, {{ request.user.first_name|default:"User" }}!</h2>
+    <p class="text-muted">Department: {{ request.user.department|default:"Not Assigned" }}</p>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3>{{ total_notices }}</h3>
+                    <p>Total Notices</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>{{ pending_count }}</h3>
+                    <p>Pending Notices</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="small-box bg-primary">
+                <div class="inner">
+                    <h3>{{ in_progress_count }}</h3>
+                    <p>In Progress</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3>{{ completed_count }}</h3>
+                    <p>Completed</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Notices Table -->
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">Latest Notices</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Client Code</th>
+                        <th>Client Name</th>
+                        <th>Status</th>
+                        <th>Date of Receipt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for notice in latest_notices %}
+                        <tr>
+                            <td>{{ notice.client_code }}</td>
+                            <td>{{ notice.name_of_client }}</td>
+                            <td>{{ notice.status }}</td>
+                            <td>{{ notice.date_of_receipt }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No notices available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<h3 class="mb-3">Compliance Records ({{ request.user.department }})</h3>
+
+
+<!-- Export Button with Bottom Margin -->
+<div class="d-flex gap-2 mb-3">
+    <button id="exportExcel" class="btn btn-success btn-sm" type="button">
+        Export to Excel
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped datatable">
+        <thead class="thead-dark">
+            <tr>
+                <th>ID</th>
+                <th>Actions</th>
+                <th>Created By</th>
+                
+                <th>Department</th>
+                <th>Date of Receipt</th>
+                <th>Mode of Receipt</th>
+                <th>Client Code</th>
+                <th>Group Code</th>
+                <th>Client Name</th>
+                <th>Financial Year</th>
+                <th>Description of Work</th>
+                <th>Action To Be Taken</th>
+                <th>Action date</th>
+                <th>Progress</th>
+                <th>Status</th>
+                <th>Status Date</th>
+                <th>Remarks</th>
+                <th>Date of Task Completion</th>
+                <th>Billing Status</th>
+                <th>Billing Amount</th>
+                <th>Bill No</th>
+                
+                
+            </tr>
+
+            <tr>
+                <th>
+                
+                </th> <!-- No filter for Actions -->
+                {% for i in filter_range  %}
+                    <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
+                {% endfor %}
+            </tr>
+
+        </thead>
+        <tbody>
+            {% for notice in notices %}
+            <tr>
+                <td>{{ notice.id }}</td>
+                <td>
+                    <a href="{% url 'notice_detail' notice.id %}" class="btn btn-sm btn-info mb-1">View</a>
+
+                    
+                    <a href="{% url 'notice_edit' notice.id %}" class="btn btn-sm btn-primary mb-1">Edit</a>
+                    
+                </td>
+
+                <td>{{ notice.created_by }}</td>
+                
+                
+                <td>{{ notice.department }}</td>
+                <td>{{ notice.date_of_receipt|date:"d-m-y"  }}</td>
+                <td>{{ notice.mode_of_receipt }}</td>
+                <td>{{ notice.client_code }}</td>
+                <td>{{ notice.group_code }}</td>
+                <td>{{ notice.name_of_client }}</td>
+                <td>{{ notice.financial_year }}</td>
+                <td>{{ notice.description_of_work }}</td>
+                <td>{{ notice.action_to_be_taken }}</td>
+                <td>{{notice.action_date|date:"d-m-y" }}</td>
+                <td>{{ notice.progress }}</td>
+                <td>{{ notice.status }}</td>
+                <td>{{ notice.status_date|date:"d-m-y"  }}</td>
+                <td>{{ notice.remarks }}</td>
+                <td>{{ notice.date_of_task_completion|date:"d-m-y"  }}</td>
+                <td>{{ notice.billing_status }}</td>
+                <td>{{ notice.billing_amount }}</td>
+                <td>{{ notice.bill_no }}</td>
+                
+                
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const table = document.querySelector('table');
+    const filters = table.querySelectorAll('select.column-filter');
+    const rows = Array.from(table.querySelector('tbody').rows);
+
+    // Setup dropdown filters
+    filters.forEach((filter, colIndex) => {
+        const values = new Set();
+        rows.forEach(row => {
+            const cellText = row.cells[colIndex + 1].textContent.trim();
+            if (cellText) values.add(cellText);
+        });
+        [...values].sort().forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            filter.appendChild(option);
+        });
+
+        filter.addEventListener('change', function () {
+            const selected = this.value;
+            rows.forEach(row => {
+                const cell = row.cells[colIndex + 1];
+                const show = !selected || cell.textContent.trim() === selected;
+                row.style.display = show ? '' : 'none';
+            });
+        });
+    });
+
+    // Export button logic
+    document.getElementById('exportExcel').addEventListener('click', async function () {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Compliance");
+
+        // Title
+        const titleCell = worksheet.getCell('A1');
+        titleCell.value = 'Notice Compliance Tracker';
+        titleCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: '000C66' }
+        };
+        titleCell.font = { color: { argb: 'FFFFFF' }, bold: true, size: 14 };
+        worksheet.mergeCells('A1:U1'); // adjust based on number of columns
+        worksheet.getRow(1).height = 25;
+
+        // Headers
+        const headers = Array.from(table.querySelectorAll('thead tr:nth-child(1) th')).map(th => th.innerText.trim());
+        const headerRow = worksheet.addRow(headers);
+        headerRow.eachCell(cell => {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: '000C66' }
+            };
+            cell.font = { color: { argb: 'FFFFFF' }, bold: true };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+
+        // Data rows (visible only)
+        const dataRows = Array.from(table.querySelectorAll('tbody tr'))
+            .filter(row => row.style.display !== 'none')
+            .map(row => Array.from(row.cells).map(cell => cell.innerText.trim()));
+
+        dataRows.forEach(row => {
+            worksheet.addRow(row);
+        });
+
+        worksheet.columns.forEach(column => {
+            column.width = 20;
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), 'notice_compliance_tracker.xlsx');
+    });
+});
+</script>
+
+
+
+
+{% endblock %}
+
+
+
+
+{% block extra_scripts %}
+
+{% endblock %}

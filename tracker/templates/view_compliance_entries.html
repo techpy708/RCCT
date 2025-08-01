@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <h4 class="mb-3">ITR / TDS RECORDS</h4>
+
+    <div class="d-flex gap-2 mb-3">
+        <button id="exportExcel" class="btn btn-success btn-sm" type="button">
+            Export to Excel
+        </button>
+    </div>
+
+    <table class="table table-bordered table-striped datatable">
+        <thead class="thead-dark">
+            <tr>
+                <th>Sr. No</th>
+                <th>Form Type</th>
+                <th>Client</th>
+                <th>Nature</th>
+                <th>Year / Quarter</th>
+                <th>Assessment Year</th>
+                <th>Date</th>
+                <th>Remarks</th>
+                <th>Created By</th>
+                <th>Created At</th>
+            </tr>
+
+             <tr>
+                <th>
+                
+                </th> <!-- No filter for Actions -->
+                {% for i in filter_range  %}
+                    <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
+                {% endfor %}
+            </tr>
+
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ entry.form_type }}</td>
+                <td>{{ entry.client.client_name }}</td>
+                <td>{{ entry.nature }}</td>
+                <td>
+                    {% if entry.form_type == "ITR" %}
+                        {{ entry.year }}
+                    {% else %}
+                        {{ entry.quarter }}
+                    {% endif %}
+                </td>
+                <td>{{ entry.asy }}</td>
+                <td>{{ entry.date|date:"d-m-y" }}</td>
+                <td>{{ entry.remarks|default:"--" }}</td>
+                <td>{{ entry.created_by.username }}</td>
+                <td>{{ entry.created_at|date:"d-m-y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" class="text-center">No compliance entries found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+
+<script>
+
+    
+document.addEventListener('DOMContentLoaded', function () {
+    const table = document.querySelector('table');
+    const filters = table.querySelectorAll('select.column-filter');
+    const rows = Array.from(table.querySelector('tbody').rows);
+
+    filters.forEach((filter, colIndex) => {
+        const values = new Set();
+
+        rows.forEach(row => {
+            const cellText = row.cells[colIndex + 1].textContent.trim(); // +1 to skip "Actions"
+            if (cellText) values.add(cellText);
+        });
+
+        [...values].sort().forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            filter.appendChild(option);
+        });
+
+        filter.addEventListener('change', function () {
+            const selected = this.value;
+
+            rows.forEach(row => {
+                const cell = row.cells[colIndex + 1];
+                const show = !selected || cell.textContent.trim() === selected;
+                row.style.display = show ? '' : 'none';
+            });
+        });
+    });
+
+    document.getElementById('exportExcel').addEventListener('click', async function () {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("ITR");
+
+        // Title
+        const titleCell = worksheet.getCell('A1');
+        titleCell.value = 'ITR Tracker';
+        titleCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: '000C66' }
+        };
+        titleCell.font = { color: { argb: 'FFFFFF' }, bold: true, size: 14 };
+        worksheet.mergeCells('A1:U1'); // adjust based on number of columns
+        worksheet.getRow(1).height = 25;
+
+        // Headers
+        const headers = Array.from(table.querySelectorAll('thead tr:nth-child(1) th')).map(th => th.innerText.trim());
+        const headerRow = worksheet.addRow(headers);
+        headerRow.eachCell(cell => {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: '000C66' }
+            };
+            cell.font = { color: { argb: 'FFFFFF' }, bold: true };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+
+        // Data rows (visible only)
+        const dataRows = Array.from(table.querySelectorAll('tbody tr'))
+            .filter(row => row.style.display !== 'none')
+            .map(row => Array.from(row.cells).map(cell => cell.innerText.trim()));
+
+        dataRows.forEach(row => {
+            worksheet.addRow(row);
+        });
+
+        worksheet.columns.forEach(column => {
+            column.width = 20;
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), 'ITR_tracker.xlsx');
+    });
+
+    
+});
+</script>
+
+{% endblock %}

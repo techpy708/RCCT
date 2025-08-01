@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h4 class="mb-4">GSTR RECORDS</h4>
+
+    <div class="d-flex gap-2 mb-3">
+        <button id="exportExcel" class="btn btn-success btn-sm" type="button">
+            Export to Excel
+        </button>
+    </div>
+
+    <table class="table table-bordered table-striped table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>Sr No</th>
+                <th>Form Type</th>
+                <th>Client</th>
+                <th>Nature</th>
+                
+                <th>Year / Month</th>
+                <th>Date</th>
+                <th>Remarks</th>
+                <th>Created By</th>
+            </tr>
+
+            <tr>
+                <th>
+                
+                </th> <!-- No filter for Actions -->
+                {% for i in filter_range  %}
+                    <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
+                {% endfor %}
+            </tr>
+            
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ entry.form_type }}</td>
+                <td>{{ entry.client.client_name }}</td>
+                <td>{{ entry.nature }}</td>
+                
+                <td>
+                    {% if entry.form_type == "GSTR 1" or entry.form_type == "GSTR 3B" %}
+                        {{ entry.month }}
+                    {% else %}
+                        {{ entry.year }}
+                    {% endif %}
+                </td>
+                <td>{{entry.date |date:"d-m-y" }}</td>
+                <td>{{ entry.remarks }}</td>
+                <td>{{ entry.created_by.username }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">No entries found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const table = document.querySelector('table');
+    const filters = table.querySelectorAll('select.column-filter');
+    const rows = Array.from(table.querySelector('tbody').rows);
+
+    filters.forEach((filter, colIndex) => {
+        const values = new Set();
+
+        rows.forEach(row => {
+            const cellText = row.cells[colIndex + 1].textContent.trim(); // +1 to skip "Actions"
+            if (cellText) values.add(cellText);
+        });
+
+        [...values].sort().forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            filter.appendChild(option);
+        });
+
+        filter.addEventListener('change', function () {
+            const selected = this.value;
+
+            rows.forEach(row => {
+                const cell = row.cells[colIndex + 1];
+                const show = !selected || cell.textContent.trim() === selected;
+                row.style.display = show ? '' : 'none';
+            });
+        });
+    });
+
+    document.getElementById('exportExcel').addEventListener('click', async function () {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("GSTR");
+
+        // Title
+        const titleCell = worksheet.getCell('A1');
+        titleCell.value = 'GSTR Tracker';
+        titleCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: '000C66' }
+        };
+        titleCell.font = { color: { argb: 'FFFFFF' }, bold: true, size: 14 };
+        worksheet.mergeCells('A1:U1'); // adjust based on number of columns
+        worksheet.getRow(1).height = 25;
+
+        // Headers
+        const headers = Array.from(table.querySelectorAll('thead tr:nth-child(1) th')).map(th => th.innerText.trim());
+        const headerRow = worksheet.addRow(headers);
+        headerRow.eachCell(cell => {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: '000C66' }
+            };
+            cell.font = { color: { argb: 'FFFFFF' }, bold: true };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+
+        // Data rows (visible only)
+        const dataRows = Array.from(table.querySelectorAll('tbody tr'))
+            .filter(row => row.style.display !== 'none')
+            .map(row => Array.from(row.cells).map(cell => cell.innerText.trim()));
+
+        dataRows.forEach(row => {
+            worksheet.addRow(row);
+        });
+
+        worksheet.columns.forEach(column => {
+            column.width = 20;
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), 'GSTR_tracker.xlsx');
+        
+    });
+
+    
+    
+});
+</script>
+
+{% endblock %}

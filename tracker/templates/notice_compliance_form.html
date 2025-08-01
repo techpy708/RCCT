@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+
+<section class="content">
+  <div class="container-fluid">
+    {% if messages %}
+    <div class="mt-2">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="card card-primary mt-4">
+      <div class="card-header">
+        <h3 class="card-title">Add / Edit Notice Compliance</h3>
+      </div>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="card-body">
+          
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label>Department</label>
+
+              {% if user.department == "Admin" %}
+              <select name="department" class="form-control" required>
+                {% for value, label in form.fields.department.choices %}
+                  <option value="{{ value }}" {% if form.instance.department == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+                {% else %}
+                 <!-- Others: show readonly department -->
+                <input type="text" class="form-control" value="{{ user.department }}" readonly>
+                <input type="hidden" name="department" value="{{ user.department }}">
+              {% endif %}
+            </div>
+            {% if user_role == "Executive" or user_role == "Manager" or user.department == "Admin" or user.department == "Accounts" %}
+            <div class="form-group col-md-4">
+              <label>Date of Receipt</label>
+              <input type="date" name="date_of_receipt" class="form-control" value="{{ form.instance.date_of_receipt|date:'Y-m-d' }}">
+            </div>
+
+            <div class="form-group col-md-4">
+              <label>Mode of Receipt</label>
+              <input type="text" name="mode_of_receipt" class="form-control" value="{{ form.instance.mode_of_receipt }}">
+            </div>
+          </div>
+
+          <div class="form-row">
+            
+
+            <!-- <div class="form-group col-md-4">
+              <label for="id_group_code_selection">Group Code</label>
+              <input type="text" name="group_code" class="form-control" value="{{ form.instance.group_code }}">
+            </div> -->
+
+            <div class="form-group col-md-4">
+                <label for="id_group_selection">Group Code</label>
+                {{ form.group_selection|add_class:"form-control" }}
+                {% if form.group_selection.errors %}
+                  <small class="text-danger">{{ form.group_selection.errors|striptags }}</small>
+                {% endif %}
+
+            </div>
+
+            
+            <div class="form-group col-md-4">
+                <label for="id_client_selection">Client</label>
+                {{ form.client_selection|add_class:"form-control" }}
+                {% if form.client_selection.errors %}
+                  <small class="text-danger">{{ form.client_selection.errors|striptags }}</small>
+                {% endif %}
+
+            </div>
+
+            <div class="form-group col-md-4">
+              <label>Financial Year</label>
+              <select name="financial_year" class="form-control">
+                {% for value, label in form.fields.financial_year.choices %}
+                  <option value="{{ value }}" {% if form.initial.financial_year == value or form.instance.financial_year == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group col-md-4">
+              <label>Description of Work</label>
+              <input type="text" name="description_of_work" class="form-control" value="{{ form.instance.description_of_work }}">
+            </div>
+               {% endif %}
+            
+            {% if user_role == "Manager" or  user.department == "Admin" or user.department == "Accounts" %}
+
+            <div class="form-group col-md-4">
+              <label>Action to be Taken</label>
+              <input type="text" name="action_to_be_taken" class="form-control" value="{{ form.instance.action_to_be_taken }}">
+            </div>
+
+            <div class="form-group col-md-4">
+              <label>Action Date</label>
+              <input type="date" name="action_date" class="form-control" value="{{ form.instance.action_date|date:'Y-m-d' }}">
+            </div>
+
+            <div class="form-group col-md-4">
+              <label>Progress</label>
+              <input type="text" name="progress" class="form-control" value="{{ form.instance.progress }}">
+            </div>
+
+            <div class="form-group col-md-4">
+              <label>Status</label>
+              <select name="status" class="form-control">
+                {% for value, label in form.fields.status.choices %}
+                  <option value="{{ value }}" {% if form.instance.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group col-md-4">
+              <label>Status Date</label>
+              <input type="date" name="status_date" class="form-control" value="{{ form.instance.status_date|date:'Y-m-d' }}">
+            </div>
+
+            <div class="form-group col-md-4">
+              <label>Remarks</label>
+              <input type="text" name="remarks" class="form-control" value="{{ form.instance.remarks }}">
+            </div>
+
+            <div class="form-group col-md-4">
+              <label>Date of Task Completion</label>
+              <input type="date" name="date_of_task_completion" class="form-control" value="{{ form.instance.date_of_task_completion|date:'Y-m-d' }}">
+            </div>
+          {{ endif }}
+
+          {% if  user.department == "Admin" or user.department == "Accounts" %}
+
+            {% if form.fields.billing_status %}
+              <div class="form-group col-md-4">
+                <label>Billing Status</label>
+                <select name="billing_status" class="form-control">
+                  <option value="" {% if not form.instance.billing_status %}selected{% endif %}>-- Select --</option>
+                  {% for value, label in form.fields.billing_status.choices %}
+                    <option value="{{ value }}" {% if form.instance.billing_status == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            {% endif %}
+
+            {% if form.fields.billing_amount %}
+              <div class="form-group col-md-4">
+                <label>Billing Amount</label>
+                <input type="number" step="0.01" name="billing_amount" class="form-control" value="{{ form.instance.billing_amount }}">
+              </div>
+            {% endif %}
+
+            {% if form.fields.bill_no %}
+              <div class="form-group col-md-4">
+                <label>Bill No</label>
+                <input type="text" name="bill_no" class="form-control" value="{{ form.instance.bill_no }}">
+              </div>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% endif %}
+        </div>
+
+        <div class="card-footer text-left">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+
+
+<script src="{% static 'dashboard/plugins/jquery/jquery.min.js' %}"></script>
+
+<script>
+$(document).ready(function() {
+    console.log("Script loaded");
+
+    $('#id_group_selection').change(function() {
+        var groupCode = $(this).val();
+        console.log("Selected group code:", groupCode);
+
+        if (!groupCode) return;
+
+        $.ajax({
+            url: "{% url 'get_clients_by_group' %}",  // ✅ must be inside a Django template
+            method: 'GET',
+            data: {
+                'group_code': groupCode
+            },
+            dataType: 'json',
+            success: function(data) {
+                console.log("Received clients:", data.clients);
+                var clientSelect = $('#id_client_selection');
+                clientSelect.empty();
+                clientSelect.append('<option value="">---------</option>');
+
+                $.each(data.clients, function(index, client) {
+                    var value = client.code + '|||' + client.name;
+                    var label = client.code + ' - ' + client.name;
+                    clientSelect.append($('<option>', {
+                        value: value,
+                        text: label
+                    }));
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX error:", error);
+                alert("Failed to load clients.");
+            }
+        });
+    });
+});
+</script>
+
+
+{% endblock %}

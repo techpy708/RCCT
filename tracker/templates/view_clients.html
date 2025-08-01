@@ -1,0 +1,38 @@
+{% block content %}
+<div class="container-fluid">
+    <h4 class="mb-3">Client Master List</h4>
+
+    <table class="table table-bordered table-striped datatable">
+        <thead>
+            <tr>
+                <th>Sr. No</th>
+                <th>Client Code</th>
+                <th>Client Name</th>
+                <th>Group Code</th>           <!-- ✅ -->
+                <th>Email</th>                <!-- ✅ -->
+                <th>Phone Number</th>         <!-- ✅ -->
+                <th>Nature of Client</th>
+                <th>Department</th>
+                <th>Created By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in clients %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ client.client_code }}</td>
+                <td>{{ client.client_name }}</td>
+                <td>{{ client.group_code }}</td>         <!-- ✅ -->
+                <td>{{ client.email }}</td>              <!-- ✅ -->
+                <td>{{ client.phone_number }}</td>       <!-- ✅ -->
+                <td>{{ client.nature_of_client }}</td>
+                <td>{{ client.department }}</td>
+                <td>{{ client.created_by.username }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" class="text-center">No clients found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

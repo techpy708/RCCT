@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    {% if messages %}
+    <div class="mt-2">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">Add ITR / TDS Entry</h3>
+        </div>
+
+        <!-- Form type selector -->
+        <form method="get" class="p-3">
+            <div class="form-group">
+                <label for="form_type">Form Type</label>
+                <select name="form_type" class="form-control" onchange="this.form.submit()">
+                    <option value="">--- Select ---</option>
+                    <option value="ITR" {% if selected_form_type == "ITR" %}selected{% endif %}>ITR</option>
+                    <option value="TDS Return" {% if selected_form_type == "TDS Return" %}selected{% endif %}>TDS Return</option>
+                </select>
+            </div>
+        </form>
+
+        <!-- Actual submission form -->
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="card-body">
+                <input type="hidden" name="form_type" value="{{ selected_form_type }}">
+
+                <div class="row g-3">
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.client.id_for_label }}">Client</label>
+                        {{ form.client }}
+                        {% if form.client.errors %}
+                            <div class="text-danger">{{ form.client.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+
+                    
+
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.nature.id_for_label }}">Nature</label>
+                        {{ form.nature }}
+                        {% if form.nature.errors %}
+                            <div class="text-danger">{{ form.nature.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    {% if not form.year.is_hidden %}
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.year.id_for_label }}">Finacial Year</label>
+                        {{ form.year }}
+                        {% if form.year.errors %}
+                            <div class="text-danger">{{ form.year.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+
+                    {% if not form.quarter.is_hidden %}
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.quarter.id_for_label }}">Quarter</label>
+                        {{ form.quarter }}
+                        {% if form.quarter.errors %}
+                            <div class="text-danger">{{ form.quarter.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.asy.id_for_label }}">Assessment Year</label>
+                        {{ form.asy }}
+                        {% if form.asy.errors %}
+                            <div class="text-danger">{{ form.asy.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.date.id_for_label }}">Date of Filing</label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <div class="text-danger">{{ form.date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.remarks.id_for_label }}">Remarks</label>
+                        {{ form.remarks }}
+                        {% if form.remarks.errors %}
+                            <div class="text-danger">{{ form.remarks.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Submit</button>
+                
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'dashboard/plugins/jquery/jquery.min.js' %}"></script>
+
+
+<script>
+$(document).ready(function () {
+    $('#id_client').change(function () {
+        const clientId = $(this).val();
+        console.log("Selected client ID:", clientId);  // Debug log
+
+        if (clientId) {
+            $.ajax({
+                url: "{% url 'get_client_nature' %}",
+                data: {
+                    client_id: clientId
+                },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.nature) {
+                        $('#id_nature').val(data.nature);  // Set the nature
+                    } else {
+                        $('#id_nature').val('');
+                    }
+                },
+                error: function () {
+                    alert("Error fetching nature from server.");
+                }
+            });
+        } else {
+            $('#id_nature').val('');
+        }
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const yearField = document.getElementById('id_year');
+    const quarterField = document.getElementById('id_quarter');
+    const asyField = document.getElementById('id_asy');
+
+    function calculateAssessmentYearFromYear(yearStr) {
+        if (!yearStr) return '';
+        const parts = yearStr.split('-');
+        const base = parseInt(parts[1]);
+        const nextYear = base + 1;
+        return `20${base}-${nextYear}`;  // e.g., 2024-25 → 2025-2026
+    }
+
+    function calculateAssessmentYearFromQuarter(quarterStr) {
+        if (!quarterStr) return '';
+        const parts = quarterStr.split(' ');
+        const label = parts[0];
+        const year = parseInt(parts[1]);
+
+        if (label === 'January–March') {
+            return `${year + 1}-${year + 2}`;
+        } else {
+            return `${year + 1}-${year + 2}`;
+        }
+    }
+
+    function getLaterAssessmentYear(asy1, asy2) {
+        if (!asy1) return asy2;
+        if (!asy2) return asy1;
+
+        const start1 = parseInt(asy1.split('-')[0]);
+        const start2 = parseInt(asy2.split('-')[0]);
+
+        return start1 >= start2 ? asy1 : asy2;
+    }
+
+    function updateAssessmentYear() {
+        const ayFromYear = calculateAssessmentYearFromYear(yearField?.value);
+        const ayFromQuarter = calculateAssessmentYearFromQuarter(quarterField?.value);
+        const finalAY = getLaterAssessmentYear(ayFromYear, ayFromQuarter);
+
+        if (asyField) {
+            asyField.value = finalAY;
+            asyField.readOnly = true;
+        }
+    }
+
+    if (yearField) yearField.addEventListener('change', updateAssessmentYear);
+    if (quarterField) quarterField.addEventListener('change', updateAssessmentYear);
+
+    updateAssessmentYear(); // Initial set on page load
+});
+</script>
+
+
+{% endblock %}

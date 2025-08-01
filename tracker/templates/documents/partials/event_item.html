@@ -1,0 +1,8 @@
+<script>
+  const event = {
+    title: "{{ event.title|escapejs }}",
+    start: "{{ event.start|date:'c' }}",
+    end: "{{ event.end|date:'c' }}"
+  };
+  window.calendarInstance.addEvent(event);
+</script>

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<h3>{{ notice.client_code }} - {{ notice.name_of_client }}</h3>
+
+<table class="table table-striped">
+    <tr><th>Status</th><td>{{ notice.status }}</td></tr>
+    <tr><th>Progress</th><td>{{ notice.progress }}</td></tr>
+    <tr><th>Remarks</th><td>{{ notice.remarks }}</td></tr>
+    <tr><th>Billing Status</th><td>{{ notice.billing_status }}</td></tr>
+    <!-- Add other fields as needed -->
+</table>
+
+<h4>Status Change History</h4>
+<table class="table table-sm table-bordered">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Field Changed</th>
+            <th>Previous</th>
+            <th>New</th>
+            <th>Changed By</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for trail in trails %}
+        <tr>
+            <td>{{ trail.timestamp }}</td>
+            <td>{{ trail.field_changed }}</td>
+            <td>{{ trail.previous_value }}</td>
+            <td>{{ trail.new_value }}</td>
+            <td>{{ trail.changed_by }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No change history.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

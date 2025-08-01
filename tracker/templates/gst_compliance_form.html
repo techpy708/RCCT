@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    {% if messages %}
+    <div class="mt-2">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">Add GSTR Entry</h3>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="card-body">
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="id_form_type">Form Type</label>
+                        <select name="form_type" class="form-control" id="form_type_selector">
+                            <option value="">-- Select Form Type --</option>
+                            {% for value, label in form.fields.form_type.choices %}
+                                <option value="{{ value }}" {% if value == selected_form_type %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        {{ form.client.label_tag }}
+                        {{ form.client }}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ form.nature.label_tag }}
+                        {{ form.nature }}
+                    </div>
+
+                    {% if not form.month.is_hidden %}
+                        <div class="form-group col-md-6">
+                            {{ form.month.label_tag }}
+                            {{ form.month }}
+                            {% if form.month.errors %}
+                                <div class="text-danger">{{ form.month.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if not form.year.is_hidden %}
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            {{ form.year.label_tag }}
+                            {{ form.year }}
+                            {% if form.year.errors %}
+                                <div class="text-danger">{{ form.year.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="{{ form.date.id_for_label }}">Date of Filing</label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <div class="text-danger">{{ form.date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        {{ form.remarks.label_tag }}
+                        {{ form.remarks }}
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card-footer text-right">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script src="{% static 'dashboard/plugins/jquery/jquery.min.js' %}"></script>
+
+<script>
+    document.getElementById('form_type_selector').addEventListener('change', function () {
+        const selectedType = this.value;
+        if (selectedType) {
+            window.location.href = '?form_type=' + encodeURIComponent(selectedType);
+        }
+    });
+
+      $(document).ready(function () {
+    $('#id_client').on('change', function () {
+      var clientId = $(this).val();
+      console.log("Selected client ID:", clientId);  // Debug
+
+      if (clientId) {
+        $.ajax({
+          url: "{% url 'get_client_nature' %}",
+          data: { client_id: clientId },
+          dataType: 'json',
+          success: function (data) {
+            console.log("Fetched nature:", data.nature); // Debug
+            $('#id_nature').val(data.nature);
+          },
+          error: function (xhr, status, error) {
+            console.log("Error fetching nature:", error); // Debug
+            alert("Could not fetch client nature.");
+          }
+        });
+      } else {
+        $('#id_nature').val('');
+      }
+    });
+  });
+</script>
+{% endblock %}
