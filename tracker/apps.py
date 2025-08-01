@@ -14,7 +14,8 @@ class TrackerConfig(AppConfig):
                     username='admin',
                     email='admin@example.com',
                     password='password123@@',
-                    department='Admin'
+                    department='Admin',
+                    user_role = 'Admin'
                 )
                 print("✅ Default admin user created.")
         except (OperationalError, ProgrammingError):

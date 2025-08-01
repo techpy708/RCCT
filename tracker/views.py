@@ -139,11 +139,13 @@ def add_notice_compliance(request):
     
     if request.method == 'POST':
         form = NoticeComplianceForm(request.POST, user=request.user)
+        print("DEBUG: client_selection from POST =", request.POST.get('client_selection'))
+        print("DEBUG: form.cleaned_data (after is_valid) =", form.cleaned_data if form.is_valid() else form.errors)
         if form.is_valid():
             notice = form.save(commit=False)
             notice.created_by = request.user
             notice.save()
-            return redirect('notice_list')  # Redirect to list or detail view
+            #return redirect('notice_list')  # Redirect to list or detail view
     else:
         form = NoticeComplianceForm(user=request.user)
 
@@ -154,10 +156,8 @@ def add_notice_compliance(request):
 
 
 def notice_list(request):
-    if request.user.department == 'Admin':
+    if request.user.department == 'Admin' or request.user.department == 'Accounts':
         notices = NoticeCompliance.objects.all()
-    elif request.user.department == 'Accounts':
-        notices = NoticeCompliance.objects.filter(billing_status='Billing')
     else:
         notices = NoticeCompliance.objects.filter(department=request.user.department)
 
@@ -402,15 +402,157 @@ def get_client_nature(request):
 from django.http import JsonResponse
 from .models import ClientMaster
 
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+@login_required
 def get_clients_by_group(request):
-    group_code = request.GET.get('group_code')
-    print("Received group code:", group_code)  # ✅ Debug
-    clients = ClientMaster.objects.filter(group_code=group_code).order_by('client_name')
-    client_list = [
-        {"code": c.client_code, "name": c.client_name}
-        for c in clients
-    ]
-    print("Sending clients:", client_list)  # ✅ Debug
-    return JsonResponse({"clients": client_list})
+    group_code = request.GET.get('group_code', None)
+    user = request.user
+    if group_code:
+        # If user is admin or accounts, show all clients for group_code
+        if user.department in ['Admin', 'Accounts']:
+            clients = ClientMaster.objects.filter(group_code=group_code)
+        else:
+            # Filter clients by both group_code and user's department
+            clients = ClientMaster.objects.filter(group_code=group_code, department=user.department)
+        
+        client_list = [
+            {'code': c.client_code, 'name': c.client_name}
+            for c in clients.order_by('client_name')
+        ]
+        return JsonResponse({'clients': client_list})
+    else:
+        return JsonResponse({'clients': []})
 
 
+# mailer/views.py
+
+# mailer/views.py
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.core.mail import EmailMessage, get_connection
+from django.http import HttpResponse
+from .models import SentEmail, ClientMaster
+from tracker.utils.email_credentials import get_email_credentials
+
+from django.contrib import messages
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def compose_email(request):
+    client_emails = list(
+        ClientMaster.objects.filter(department=request.user.department)
+        .values_list('email', flat=True)
+    )
+
+    
+    print(request.user.user_role)
+
+    if request.method == 'POST':
+        user = request.user
+        department = user.department
+
+        to_raw = request.POST.get('to')
+        cc_raw = request.POST.get('cc', '')
+        bcc_manual_raw = request.POST.get('bcc', '')
+        subject = request.POST.get('subject')
+        body = request.POST.get('body')
+
+        to_list = [email.strip() for email in to_raw.split(',') if email.strip()]
+        cc_list = [email.strip() for email in cc_raw.split(',') if email.strip()]
+        manual_bcc = [email.strip() for email in bcc_manual_raw.split(',') if email.strip()]
+
+        auto_bcc = list(ClientMaster.objects.filter(department=department).values_list('email', flat=True))
+        all_bcc = list(set(auto_bcc + manual_bcc))
+
+        if not to_list:
+            try:
+                sender_email, _ = get_email_credentials(department)
+                to_list = [sender_email]
+            except ValueError:
+                to_list = []
+
+        file = request.FILES.get('attachment')
+        attachment_info = None
+        if file:
+            attachment_info = (file.name, file.read(), file.content_type)
+
+        # Start async email sending
+        send_email_async(
+            department,
+            subject,
+            body,
+            to_list,
+            cc_list,
+            all_bcc,
+            attachment_info,
+            user
+        )
+
+        messages.success(request, "Email is being sent in the background!")
+
+        # Render same page with success message and prefill BCC
+        return render(request, 'compose_mail.html', {'client_emails': ', '.join(client_emails)})
+
+    return render(request, 'compose_mail.html', {'client_emails': ', '.join(client_emails)})
+
+
+import threading
+from django.core.mail import EmailMessage, get_connection
+
+def send_email_async(department, subject, body, to_list, cc_list, bcc_list, attachment_info=None, user=None):
+    def task():
+        
+
+        sender_email, app_password = get_email_credentials(department)
+        connection = get_connection(
+            host='smtp.gmail.com',
+            port=587,
+            username=sender_email,
+            password=app_password,
+            use_tls=True
+        )
+        email = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=sender_email,
+            to=to_list,
+            cc=cc_list,
+            bcc=bcc_list,
+            connection=connection
+        )
+        if attachment_info:
+            filename, content, mimetype = attachment_info
+            email.attach(filename, content, mimetype)
+
+        email.send()
+
+        # Save email log after sending
+        from .models import SentEmail  # import inside thread
+        SentEmail.objects.create(
+            user=user,
+            sender_email=sender_email,
+            to=', '.join(to_list),
+            cc=', '.join(cc_list) if cc_list else '',
+            bcc=', '.join(bcc_list) if bcc_list else '',
+            subject=subject,
+            body=body,
+            attachment=attachment_info[1] if attachment_info else None,
+            attachment_name=attachment_info[0] if attachment_info else None,
+            attachment_content_type=attachment_info[2] if attachment_info else None
+        )
+
+    thread = threading.Thread(target=task)
+    thread.start()
+
+
+
+
+
+
+# def sent_mails(request):
+#     #mails = SentMail.objects.filter(sent_by=request.user).order_by('-date_sent')
+#     return render(request, 'sent_mails.html')#, {'sent_mails': mails})

@@ -33,7 +33,8 @@ urlpatterns = [
     # urls.py
     path('ajax/get-clients/', views.get_clients_by_group, name='get_clients_by_group'),
 
-    
+    path('compose/', views.compose_email, name='compose_mail'),
+    #path('sent/', views.sent_mails, name='sent_mails'),
 
 
 ]

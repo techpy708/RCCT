@@ -63,44 +63,53 @@ class NoticeComplianceForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
+        for field in self.fields.values():
+            field.required = False
         
 
-        # Populate client dropdown
-        # self.fields['client_selection'].choices = [
-        #     (f"{c.client_code}|||{c.client_name}", f"{c.client_code} - {c.client_name}")
-        #     for c in ClientMaster.objects.all().order_by('client_name')
-        # ]
+        selected_group_code = None
+        if 'group_selection' in self.data:
+            selected_group_code = self.data.get('group_selection')
+        elif self.instance and self.instance.pk:
+            selected_group_code = self.instance.group_code
 
-
+        # Set group choices
         if user and user.department in ['Admin', 'Accounts']:
-            # Admin or Accounts department: show all clients
-            #client_queryset = ClientMaster.objects.all()
             group_queryset = ClientMaster.objects.all().distinct('group_code')
-
         elif user and user.department:
-            # Other departments: filter clients by user's department
-            #client_queryset = ClientMaster.objects.filter(department=[user.department])
-            group_queryset = ClientMaster.objects.filter(department=[user.department]).distinct('group_code')
+            group_queryset = ClientMaster.objects.filter(department=user.department).distinct('group_code')
         else:
-            # No user or no department: show none
-            #client_queryset = ClientMaster.objects.none()
             group_queryset = ClientMaster.objects.none()
-
-        # self.fields['client_selection'].choices = [
-        #     (f"{c.client_code}|||{c.client_name}", f"{c.client_code} - {c.client_name}")
-        #     for c in client_queryset.order_by('client_name')
-        # ]
-
-        # if self.instance and self.instance.pk:
-        #     combined_value = f"{self.instance.client_code}|||{self.instance.name_of_client}"
-        #     self.fields['client_selection'].initial = combined_value
-
-
 
         self.fields['group_selection'].choices = [('', '---------')] + [
             (c.group_code, c.group_code)
             for c in group_queryset.order_by('group_code')
         ]
+
+        # Set client choices (dependent on selected group and department)
+        if selected_group_code:
+            if user and user.department in ['Admin', 'Accounts']:
+                client_queryset = ClientMaster.objects.filter(group_code=selected_group_code)
+            elif user and user.department:
+                client_queryset = ClientMaster.objects.filter(group_code=selected_group_code, department=user.department)
+            else:
+                client_queryset = ClientMaster.objects.none()
+        else:
+            client_queryset = ClientMaster.objects.none()
+
+        self.fields['client_selection'].choices = [('', '---------')] + [
+            (f"{c.client_code}|||{c.client_name}", f"{c.client_code} - {c.client_name}")
+            for c in client_queryset.order_by('client_name')
+        ]
+
+
+        if self.instance and self.instance.pk:
+            self.fields['group_selection'].initial = self.instance.group_code
+
+        # Set initial value if editing
+        if self.instance and self.instance.pk:
+            combined_value = f"{self.instance.client_code}|||{self.instance.name_of_client}"
+            self.fields['client_selection'].initial = combined_value
 
 
         #client_queryset = ClientMaster.objects.none()
@@ -132,13 +141,17 @@ class NoticeComplianceForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         client_val = self.cleaned_data.get('client_selection')
+        group_val = self.cleaned_data.get('group_selection')
         if client_val:
             client_code, client_name = client_val.split("|||")
             instance.client_code = client_code
             instance.name_of_client = client_name
+        if group_val:
+            instance.group_code = group_val
         if commit:
             instance.save()
         return instance
+
 
 
 from django import forms
@@ -325,3 +338,19 @@ class GSTComplianceForm(forms.ModelForm):
             self.fields['month'].widget = forms.Select(choices=get_month_choices_with_year(), attrs={'class': 'form-control'})
         elif form_type in ['GSTR 9', 'GSTR 9C']:
             self.fields['year'].widget = forms.Select(choices=generate_financial_year_choices(), attrs={'class': 'form-control'})
+
+
+
+
+
+# mailer/forms.py
+
+from django import forms
+
+class ComposeEmailForm(forms.Form):
+    to = forms.CharField(max_length=500)
+    cc = forms.CharField(required=False, max_length=500)
+    bcc = forms.CharField(required=False, max_length=500)
+    subject = forms.CharField(max_length=255)
+    body = forms.CharField(widget=forms.Textarea)
+    attachment = forms.FileField(required=False)

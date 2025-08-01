@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card card-primary card-outline">
+        <div class="card-header">
+          {% if messages %}
+            <div>
+              {% for message in messages %}
+                <div class="alert alert-success">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+
+          <h3 class="card-title">Compose New Message</h3>
+        </div>
+        <!-- /.card-header -->
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          
+          <div class="card-body">
+            <div class="form-group">
+              <input class="form-control" name="to" placeholder="To:">
+            </div>
+            <div class="form-group">
+              <input class="form-control" name="cc" placeholder="Cc:">
+            </div>
+            <div class="form-group">
+              <input class="form-control" name="bcc" placeholder="Bcc:"  value="{{ client_emails }}" disabled>
+            </div>
+            <div class="form-group">
+              <input class="form-control" name="subject" placeholder="Subject:" required>
+            </div>
+            <div class="form-group">
+              <textarea id="compose-textarea" class="form-control" name="body" style="height: 300px">
+              </textarea>
+            </div>
+            <div class="form-group">
+              <input type="file" name="attachment" class="form-control-file">
+            </div>
+          </div>
+          <!-- /.card-body -->
+          <div class="card-footer">
+            <div class="float-right">
+              <button type="submit" class="btn btn-primary">
+                <i class="far fa-envelope"></i> Send
+              </button>
+            </div>
+            <button type="reset" class="btn btn-default">
+              <i class="fas fa-times"></i> Discard
+            </button>
+          </div>
+        </form>
+        <!-- /.card-footer -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

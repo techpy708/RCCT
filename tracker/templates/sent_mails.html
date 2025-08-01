@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card card-primary card-outline">
+        <div class="card-header">
+          <h3 class="card-title">Sent Mail</h3>
+        </div>
+        <!-- /.card-header -->
+        <div class="card-body p-0">
+          <div class="table-responsive mailbox-messages">
+            <table class="table table-hover table-striped">
+              <thead>
+                <tr>
+                  <th>To</th>
+                  <th>Subject</th>
+                  <th>Date Sent</th>
+                  <th>Attachment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for mail in sent_mails %}
+                <tr>
+                  <td>{{ mail.to }}</td>
+                  <td>{{ mail.subject }}</td>
+                  <td>{{ mail.date_sent }}</td>
+                  <td>{{ mail.attachment }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No sent mails found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <!-- /.mail-box-messages -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

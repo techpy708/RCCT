@@ -148,8 +148,16 @@
         </li>
         {% endif %}
 
+        {% if request.user.user_role == 'Manager' or request.user.user_role == 'Admin' %}
+        <li class="nav-item">
+            <a href="{% url 'compose_mail' %}" class="nav-link">
+                <i class="fas fa-pencil-alt nav-icon"></i>
+                <p>Compose Mail</p>
+            </a>
+        </li>
+        {% endif %}
 
-
+    
 
         <li class="nav-item">
             <a href="{% url 'change_password' %}" class="nav-link">
