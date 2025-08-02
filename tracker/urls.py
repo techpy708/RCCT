@@ -28,7 +28,7 @@ urlpatterns = [
     path('gst/add/', views.add_gst_compliance_entry, name='add_gst_compliance_entry'),
     path('gst/view/', views.view_gst_compliance_entries, name='view_gst_entries'),
 
-    #path('get-client-nature/', views.get_client_nature, name='get_client_nature'),
+    path('get-client-nature/', views.get_client_nature, name='get_client_nature'),
 
     #path('get-group-by-client/', views.get_group_by_client, name='get_group_by_client'),
 
