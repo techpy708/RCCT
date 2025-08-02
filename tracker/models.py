@@ -86,6 +86,8 @@ class NoticeCompliance(models.Model):
         related_name='notice_created'
     )
 
+    bill_date = models.DateField(blank=True, null=True)
+    
     def __str__(self):
         return f"{self.client_code} - {self.name_of_client}"
 

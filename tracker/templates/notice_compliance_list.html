@@ -43,6 +43,7 @@
                         <th>Billing Status</th>
                         <th>Billing Amount</th>
                         <th>Bill No</th>
+                        <th>Bill Date</th>
                         {% endif %}
                 {% endif %}
                 
@@ -72,6 +73,7 @@
                     <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
 
                     {% if request.user.user_role != "Manager" %}
+                        <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
                         <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
                         <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
                         <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
@@ -118,6 +120,7 @@
                         <td>{{ notice.billing_status }}</td>
                         <td>{{ notice.billing_amount }}</td>
                         <td>{{ notice.bill_no }}</td>
+                         <td>{{ notice.bill_date }}</td>
                     {% endif %}
                 {% endif %}
                 

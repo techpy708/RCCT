@@ -56,6 +56,7 @@ class NoticeComplianceForm(forms.ModelForm):
             'action_date': forms.DateInput(attrs={'type': 'date'}),
             'status_date': forms.DateInput(attrs={'type': 'date'}),
             'date_of_task_completion': forms.DateInput(attrs={'type': 'date'}),
+            'bill_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -113,6 +114,10 @@ class NoticeComplianceForm(forms.ModelForm):
             combined_value = f"{self.instance.client_code}|||{self.instance.name_of_client}|||{self.instance.group_code}"
             self.fields['client_selection'].initial = combined_value
 
+        if 'bill_date' in self.fields and self.instance and self.instance.bill_date:
+            self.fields['bill_date'].initial = self.instance.bill_date
+
+
         if user:
             self.fields['department'].initial = user.department
 
@@ -120,7 +125,7 @@ class NoticeComplianceForm(forms.ModelForm):
             user_dept = user.department.name if hasattr(user.department, 'name') else str(user.department)
 
             if not user.is_superuser and user_dept not in allowed_departments:
-                for field in ['billing_amount', 'bill_no', 'billing_status']:
+                for field in ['billing_amount', 'bill_no', 'billing_status','bill_date']:
                     if field in self.fields:
                         del self.fields[field]
 

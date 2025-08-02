@@ -177,6 +177,15 @@
                 <input type="text" name="bill_no" class="form-control" value="{{ form.instance.bill_no }}">
               </div>
             {% endif %}
+
+            {% if form.fields.bill_date %}
+              <div class="form-group col-md-4">
+                <label>Bill Date</label>
+                {{ form.bill_date|add_class:"form-control" }}
+
+              </div>
+            {% endif %}
+
           </div>
           {% endif %}
           {% endif %}
