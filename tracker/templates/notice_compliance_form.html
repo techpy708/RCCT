@@ -26,6 +26,10 @@
       <form method="post" novalidate>
         {% csrf_token %}
         <div class="card-body">
+
+          {% if user.department == "Accounts" %}
+            <fieldset disabled>
+          {% endif %}
           
           <div class="form-row">
             <div class="form-group col-md-4">
@@ -64,16 +68,6 @@
             </div> -->
 
             <div class="form-group col-md-4">
-                <label for="id_group_selection">Group Code</label>
-                {{ form.group_selection|add_class:"form-control" }}
-                {% if form.group_selection.errors %}
-                  <small class="text-danger">{{ form.group_selection.errors|striptags }}</small>
-                {% endif %}
-
-            </div>
-
-            
-            <div class="form-group col-md-4">
                 <label for="id_client_selection">Client</label>
                 {{ form.client_selection|add_class:"form-control" }}
                 {% if form.client_selection.errors %}
@@ -81,6 +75,18 @@
                 {% endif %}
 
             </div>
+
+            <div class="form-group col-md-4">
+                <label for="id_group_selection">Group Code</label>
+                {{ form.group_selection|add_class:"form-control" |attr:"disabled:true" }}
+                {% if form.group_selection.errors %}
+                  <small class="text-danger">{{ form.group_selection.errors|striptags }}</small>
+                {% endif %}
+
+            </div>
+
+            
+            
 
             <div class="form-group col-md-4">
               <label>Financial Year</label>
@@ -138,6 +144,11 @@
               <input type="date" name="date_of_task_completion" class="form-control" value="{{ form.instance.date_of_task_completion|date:'Y-m-d' }}">
             </div>
           {{ endif }}
+          
+
+          {% if user.department == "Accounts" %}
+            </fieldset>
+          {% endif %}
 
           {% if  user.department == "Admin" or user.department == "Accounts" %}
 
@@ -184,45 +195,36 @@
 <script src="{% static 'dashboard/plugins/jquery/jquery.min.js' %}"></script>
 
 <script>
-$(document).ready(function() {
-    console.log("Script loaded");
+document.addEventListener('DOMContentLoaded', function () {
+    const clientSelect = document.getElementById('id_client_selection');
+    const groupSelect = document.getElementById('id_group_selection');
 
-    $('#id_group_selection').change(function() {
-        var groupCode = $(this).val();
-        console.log("Selected group code:", groupCode);
+    function updateGroupCodeFromClient() {
+        const selectedOption = clientSelect.options[clientSelect.selectedIndex].value;
+        if (!selectedOption.includes('|||')) return;
 
-        if (!groupCode) return;
+        const parts = selectedOption.split('|||');
+        const groupCode = parts[2];
 
-        $.ajax({
-            url: "{% url 'get_clients_by_group' %}",  // ✅ must be inside a Django template
-            method: 'GET',
-            data: {
-                'group_code': groupCode
-            },
-            dataType: 'json',
-            success: function(data) {
-                console.log("Received clients:", data.clients);
-                var clientSelect = $('#id_client_selection');
-                clientSelect.empty();
-                clientSelect.append('<option value="">---------</option>');
-
-                $.each(data.clients, function(index, client) {
-                    var value = client.code + '|||' + client.name;
-                    var label = client.code + ' - ' + client.name;
-                    clientSelect.append($('<option>', {
-                        value: value,
-                        text: label
-                    }));
-                });
-            },
-            error: function(xhr, status, error) {
-                console.error("AJAX error:", error);
-                alert("Failed to load clients.");
+        // Auto-select the group_code in group_selection
+        for (let i = 0; i < groupSelect.options.length; i++) {
+            if (groupSelect.options[i].value === groupCode) {
+                groupSelect.selectedIndex = i;
+                break;
             }
-        });
-    });
+        }
+    }
+
+    if (clientSelect && groupSelect) {
+        // On change
+        clientSelect.addEventListener('change', updateGroupCodeFromClient);
+
+        // On page load (for edit form)
+        updateGroupCodeFromClient();
+    }
 });
 </script>
+
 
 
 {% endblock %}

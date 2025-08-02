@@ -55,14 +55,14 @@ BILLING_STATUS_CHOICES = [
 
 class NoticeCompliance(models.Model):
     department = models.CharField(max_length=50, choices=DEPARTMENT_CHOICE) 
-    date_of_receipt = models.DateField()
-    mode_of_receipt = models.CharField(max_length=100)
+    date_of_receipt = models.DateField(null=True, blank=True)
+    mode_of_receipt = models.CharField(max_length=100,null=True, blank=True)
     client_code = models.CharField(max_length=100)
     group_code = models.CharField(max_length=100)
     name_of_client = models.CharField(max_length=255)
     financial_year = models.CharField(max_length=10)
-    description_of_work = models.TextField()
-    action_to_be_taken = models.TextField()
+    description_of_work = models.TextField(null=True, blank=True)
+    action_to_be_taken = models.TextField(null=True, blank=True)
     action_date = models.DateField(blank=True, null=True)
     progress = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending')

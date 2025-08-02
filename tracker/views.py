@@ -405,25 +405,25 @@ from .models import ClientMaster
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 
-@login_required
-def get_clients_by_group(request):
-    group_code = request.GET.get('group_code', None)
-    user = request.user
-    if group_code:
-        # If user is admin or accounts, show all clients for group_code
-        if user.department in ['Admin', 'Accounts']:
-            clients = ClientMaster.objects.filter(group_code=group_code)
-        else:
-            # Filter clients by both group_code and user's department
-            clients = ClientMaster.objects.filter(group_code=group_code, department=user.department)
+# @login_required
+# def get_clients_by_group(request):
+#     group_code = request.GET.get('group_code', None)
+#     user = request.user
+#     if group_code:
+#         # If user is admin or accounts, show all clients for group_code
+#         if user.department in ['Admin', 'Accounts']:
+#             clients = ClientMaster.objects.filter(group_code=group_code)
+#         else:
+#             # Filter clients by both group_code and user's department
+#             clients = ClientMaster.objects.filter(group_code=group_code, department=user.department)
         
-        client_list = [
-            {'code': c.client_code, 'name': c.client_name}
-            for c in clients.order_by('client_name')
-        ]
-        return JsonResponse({'clients': client_list})
-    else:
-        return JsonResponse({'clients': []})
+#         client_list = [
+#             {'code': c.client_code, 'name': c.client_name}
+#             for c in clients.order_by('client_name')
+#         ]
+#         return JsonResponse({'clients': client_list})
+#     else:
+#         return JsonResponse({'clients': []})
 
 
 # mailer/views.py

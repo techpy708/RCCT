@@ -28,10 +28,13 @@ urlpatterns = [
     path('gst/add/', views.add_gst_compliance_entry, name='add_gst_compliance_entry'),
     path('gst/view/', views.view_gst_compliance_entries, name='view_gst_entries'),
 
-    path('get-client-nature/', views.get_client_nature, name='get_client_nature'),
+    #path('get-client-nature/', views.get_client_nature, name='get_client_nature'),
+
+    #path('get-group-by-client/', views.get_group_by_client, name='get_group_by_client'),
+
 
     # urls.py
-    path('ajax/get-clients/', views.get_clients_by_group, name='get_clients_by_group'),
+    #path('ajax/get-clients/', views.get_group_by_client, name='get_group_by_client'),
 
     path('compose/', views.compose_email, name='compose_mail'),
     #path('sent/', views.sent_mails, name='sent_mails'),

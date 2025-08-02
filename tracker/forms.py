@@ -46,7 +46,7 @@ def generate_financial_year_choices(start_year=2023, years_ahead=25):
 class NoticeComplianceForm(forms.ModelForm):
     financial_year = forms.ChoiceField(choices=generate_financial_year_choices())
     client_selection = forms.ChoiceField(label="Client", choices=[])
-    group_selection = forms.ChoiceField(label="group_code", choices=[])
+    group_selection = forms.ChoiceField(label="Group Code", choices=[])
 
     class Meta:
         model = NoticeCompliance
@@ -54,9 +54,8 @@ class NoticeComplianceForm(forms.ModelForm):
         widgets = {
             'date_of_receipt': forms.DateInput(attrs={'type': 'date'}),
             'action_date': forms.DateInput(attrs={'type': 'date'}),
-            'status_date':forms.DateInput(attrs={'type': 'date'}),
-            'date_of_task_completion':forms.DateInput(attrs={'type': 'date'}),
-            
+            'status_date': forms.DateInput(attrs={'type': 'date'}),
+            'date_of_task_completion': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -65,7 +64,6 @@ class NoticeComplianceForm(forms.ModelForm):
 
         for field in self.fields.values():
             field.required = False
-        
 
         selected_group_code = None
         if 'group_selection' in self.data:
@@ -73,7 +71,7 @@ class NoticeComplianceForm(forms.ModelForm):
         elif self.instance and self.instance.pk:
             selected_group_code = self.instance.group_code
 
-        # Set group choices
+        # Group choices
         if user and user.department in ['Admin', 'Accounts']:
             group_queryset = ClientMaster.objects.all().distinct('group_code')
         elif user and user.department:
@@ -82,11 +80,10 @@ class NoticeComplianceForm(forms.ModelForm):
             group_queryset = ClientMaster.objects.none()
 
         self.fields['group_selection'].choices = [('', '---------')] + [
-            (c.group_code, c.group_code)
-            for c in group_queryset.order_by('group_code')
+            (c.group_code, c.group_code) for c in group_queryset.order_by('group_code')
         ]
 
-        # Set client choices (dependent on selected group and department)
+        # Client choices
         if selected_group_code:
             if user and user.department in ['Admin', 'Accounts']:
                 client_queryset = ClientMaster.objects.filter(group_code=selected_group_code)
@@ -95,62 +92,83 @@ class NoticeComplianceForm(forms.ModelForm):
             else:
                 client_queryset = ClientMaster.objects.none()
         else:
-            client_queryset = ClientMaster.objects.none()
+            if user and user.department in ['Admin', 'Accounts']:
+                client_queryset = ClientMaster.objects.all()
+            elif user and user.department:
+                client_queryset = ClientMaster.objects.filter(department=user.department)
+            else:
+                client_queryset = ClientMaster.objects.none()
 
+        # Populate client_selection with encoded group_code
         self.fields['client_selection'].choices = [('', '---------')] + [
-            (f"{c.client_code}|||{c.client_name}", f"{c.client_code} - {c.client_name}")
-            for c in client_queryset.order_by('client_name')
+            (
+                f"{c.client_code}|||{c.client_name}|||{c.group_code}",
+                f"{c.client_code} - {c.client_name}"
+            ) for c in client_queryset.order_by('client_name')
         ]
 
-
+        # Set initial values if editing
         if self.instance and self.instance.pk:
             self.fields['group_selection'].initial = self.instance.group_code
-
-        # Set initial value if editing
-        if self.instance and self.instance.pk:
-            combined_value = f"{self.instance.client_code}|||{self.instance.name_of_client}"
+            combined_value = f"{self.instance.client_code}|||{self.instance.name_of_client}|||{self.instance.group_code}"
             self.fields['client_selection'].initial = combined_value
 
-
-        #client_queryset = ClientMaster.objects.none()
-        group_queryset = ClientMaster.objects.none()
-
-        # Keep rest of your existing logic
         if user:
-
-            
             self.fields['department'].initial = user.department
 
             allowed_departments = ['Admin', 'Accounts']
             user_dept = user.department.name if hasattr(user.department, 'name') else str(user.department)
 
             if not user.is_superuser and user_dept not in allowed_departments:
-                for field in ['billing_amount', 'bill_no','billing_status']:
+                for field in ['billing_amount', 'bill_no', 'billing_status']:
                     if field in self.fields:
                         del self.fields[field]
 
+            # ❗ Disable all non-billing fields for Accounts department
+            if user_dept == "Accounts":
+                for field_name in self.fields:
+                    if field_name not in ['billing_amount', 'bill_no', 'billing_status']:
+                        self.fields[field_name].widget.attrs['disabled'] = 'disabled'
+
+        # Add form-control CSS class
         for field_name, field in self.fields.items():
             css_class = "form-control"
-            
-            
             if field_name in ['description_of_work', 'action_to_be_taken', 'progress', 'remarks']:
                 field.widget = forms.TextInput(attrs={'class': css_class})
             else:
                 field.widget.attrs.update({'class': css_class})
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.initial and self.is_bound:
+            for field_name, field in self.fields.items():
+                if field.widget.attrs.get('disabled'):
+                    cleaned_data[field_name] = self.initial.get(field_name)
+
+        return cleaned_data
+
+
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         client_val = self.cleaned_data.get('client_selection')
         group_val = self.cleaned_data.get('group_selection')
+
         if client_val:
-            client_code, client_name = client_val.split("|||")
-            instance.client_code = client_code
-            instance.name_of_client = client_name
+            parts = client_val.split("|||")
+            if len(parts) >= 2:
+                instance.client_code = parts[0]
+                instance.name_of_client = parts[1]
+            if len(parts) == 3:
+                instance.group_code = parts[2]
         if group_val:
             instance.group_code = group_val
+
         if commit:
             instance.save()
         return instance
+
 
 
 
