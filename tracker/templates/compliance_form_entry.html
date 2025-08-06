@@ -158,21 +158,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const parts = yearStr.split('-');
         const base = parseInt(parts[1]);
         const nextYear = base + 1;
-        return `20${base}-${nextYear}`;  // e.g., 2024-25 → 2025-2026
+        const nextYearShort = nextYear.toString().slice(-2); // Get last 2 digits
+        return `20${base}-${nextYearShort}`;  // e.g., 2024-25 → 2025-2026
     }
 
     function calculateAssessmentYearFromQuarter(quarterStr) {
         if (!quarterStr) return '';
         const parts = quarterStr.split(' ');
-        const label = parts[0];
         const year = parseInt(parts[1]);
 
-        if (label === 'January–March') {
-            return `${year + 1}-${year + 2}`;
-        } else {
-            return `${year + 1}-${year + 2}`;
-        }
+        const startYear = year + 1;
+        const endYearShort = (year + 2).toString().slice(-2); // Get last two digits
+
+        return `${startYear}-${endYearShort}`;
     }
+
 
     function getLaterAssessmentYear(asy1, asy2) {
         if (!asy1) return asy2;

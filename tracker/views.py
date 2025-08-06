@@ -139,13 +139,17 @@ def add_notice_compliance(request):
     
     if request.method == 'POST':
         form = NoticeComplianceForm(request.POST, user=request.user)
-        print("DEBUG: client_selection from POST =", request.POST.get('client_selection'))
-        print("DEBUG: form.cleaned_data (after is_valid) =", form.cleaned_data if form.is_valid() else form.errors)
+        # print("DEBUG: client_selection from POST =", request.POST.get('client_selection'))
+        # print("DEBUG: form.cleaned_data (after is_valid) =", form.cleaned_data if form.is_valid() else form.errors)
         if form.is_valid():
             notice = form.save(commit=False)
             notice.created_by = request.user
             notice.save()
-            #return redirect('notice_list')  # Redirect to list or detail view
+            #return redirect('notice_compliance_form')  # Redirect to list or detail view
+
+            messages.success(request, 'Notice Compliance saved successfully.')
+            # Reset form to empty after successful save
+            form = NoticeComplianceForm(user=request.user)
     else:
         form = NoticeComplianceForm(user=request.user)
 
@@ -252,15 +256,15 @@ def add_compliance_entry(request):
 
     if request.method == 'POST':
         form = ComplianceFormEntryForm(request.POST, form_type=form_type, clients=clients)
-        print("POST DATA:", request.POST)   # Debug form input
-        print("FORM VALID?", form.is_valid())  # Should be False if it fail
+        # print("POST DATA:", request.POST)   # Debug form input
+        # print("FORM VALID?", form.is_valid())  # Should be False if it fail
         if form.is_valid():
-            print("yeah")
+            #print("yeah")
             compliance = form.save(commit=False)
             compliance.created_by = request.user
             compliance.save()
             messages.success(request, 'ITR entry saved successfully.')
-            print("done")
+            #print("done")
             
     else:
         form = ComplianceFormEntryForm(initial={'form_type': form_type}, form_type=form_type, clients = clients)
@@ -345,9 +349,9 @@ def add_gst_compliance_entry(request):
     
     if request.method == 'POST':
         form = GSTComplianceForm(request.POST, form_type=form_type, clients = clients)
-        print("POST DATA:", request.POST)
-        print("FORM VALID?", form.is_valid())
-        print("FORM ERRORS:", form.errors)
+        # print("POST DATA:", request.POST)
+        # print("FORM VALID?", form.is_valid())
+        # print("FORM ERRORS:", form.errors)
 
         if form.is_valid():
             entry = form.save(commit=False)
@@ -449,7 +453,7 @@ def compose_email(request):
     )
 
     
-    print(request.user.user_role)
+    #print(request.user.user_role)
 
     if request.method == 'POST':
         user = request.user

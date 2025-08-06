@@ -30,7 +30,7 @@ class CustomPasswordChangeForm(SetPasswordForm):
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
     )
 
-def generate_financial_year_choices(start_year=2023, years_ahead=25):
+def generate_financial_year_choices(start_year=2010, years_ahead=50):
     current_year = datetime.date.today().year
     end_year = current_year + years_ahead
     choices = []
@@ -43,6 +43,7 @@ def generate_financial_year_choices(start_year=2023, years_ahead=25):
     return choices
 
 
+
 class NoticeComplianceForm(forms.ModelForm):
     financial_year = forms.ChoiceField(choices=generate_financial_year_choices())
     client_selection = forms.ChoiceField(label="Client", choices=[])
@@ -52,6 +53,7 @@ class NoticeComplianceForm(forms.ModelForm):
         model = NoticeCompliance
         exclude = ['created_by', 'client_code', 'name_of_client']
         widgets = {
+            
             'date_of_receipt': forms.DateInput(attrs={'type': 'date'}),
             'action_date': forms.DateInput(attrs={'type': 'date'}),
             'status_date': forms.DateInput(attrs={'type': 'date'}),
@@ -185,6 +187,7 @@ from multiselectfield import MultiSelectFormField
 
 class ClientMasterForm(forms.ModelForm):
     department = MultiSelectFormField(choices=CustomUser.DEPARTMENT_CHOICES)
+    
 
     class Meta:
         model = ClientMaster

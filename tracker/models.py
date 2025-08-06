@@ -61,6 +61,7 @@ class NoticeCompliance(models.Model):
     group_code = models.CharField(max_length=100)
     name_of_client = models.CharField(max_length=255)
     financial_year = models.CharField(max_length=10)
+    asy = models.CharField(max_length=10, blank=True, null=True)  # for assessment_year 
     description_of_work = models.TextField(null=True, blank=True)
     action_to_be_taken = models.TextField(null=True, blank=True)
     action_date = models.DateField(blank=True, null=True)
@@ -109,6 +110,21 @@ from django.conf import settings
 from multiselectfield import MultiSelectField
 
 class ClientMaster(models.Model):
+
+    NATURE_OF_CLIENT_CHOICES = [
+        ('Bank', 'Bank'),
+        ('Government', 'Government'),
+        ('HUF', 'HUF'),
+        ('Insurance company', 'Insurance company'),
+        ('LLP', 'LLP'),
+        ('Other', 'Other'),
+        ('Partnership firm', 'Partnership firm'),
+        ('Private company', 'Private company'),
+        ('Proprietorship', 'Proprietorship'),
+        ('Public company', 'Public company'),
+        ('Trust', 'Trust'),
+    ]
+
     DEPARTMENT_CHOICES = CustomUser.DEPARTMENT_CHOICES  # or define it locally
 
     client_code = models.CharField(max_length=100)
@@ -116,7 +132,7 @@ class ClientMaster(models.Model):
     group_code = models.CharField(max_length=100, blank=True, null=True)  # ✅ New
     email = models.EmailField(max_length=255, blank=True, null=True)       # ✅ New
     phone_number = models.CharField(max_length=15, blank=True, null=True)  # ✅ New
-    nature_of_client = models.CharField(max_length=255, blank=True, null=True)
+    nature_of_client = models.CharField(max_length=30,choices=NATURE_OF_CLIENT_CHOICES,null=True,blank=True,)
     department = MultiSelectField(choices=DEPARTMENT_CHOICES)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

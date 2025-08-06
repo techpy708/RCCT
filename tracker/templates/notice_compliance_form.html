@@ -90,11 +90,19 @@
 
             <div class="form-group col-md-4">
               <label>Financial Year</label>
-              <select name="financial_year" class="form-control">
+              <select name="financial_year" id="financial_year" class="form-control">
                 {% for value, label in form.fields.financial_year.choices %}
                   <option value="{{ value }}" {% if form.initial.financial_year == value or form.instance.financial_year == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
+            </div>
+
+            <div class="form-group col-md-4">
+                <label for="{{ form.asy.id_for_label }}">Assessment Year</label>
+                {{ form.asy |add_class:"form-control" |attr:"disabled:true" }}
+                {% if form.asy.errors %}
+                    <div class="text-danger">{{ form.asy.errors.0 }}</div>
+                {% endif %}
             </div>
 
             <div class="form-group col-md-4">
@@ -234,6 +242,65 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+<script>
+function updateAssessmentYear() {
+    console.log("updateAssessmentYear triggered");
 
+    const fySelect = document.getElementById('financial_year');
+    const ayField = document.getElementById('{{ form.asy.id_for_label }}');
+
+    if (!fySelect || !ayField) {
+        console.warn("Missing FY or AY field");
+        return;
+    }
+
+    const selectedFY = fySelect.value;
+    console.log("Selected Financial Year:", selectedFY);
+
+    if (selectedFY) {
+        const parts = selectedFY.split('-');
+        if (parts.length === 2) {
+            const startYear = parseInt(parts[0], 10);
+            if (!isNaN(startYear)) {
+                const ayStartYear = startYear + 1; // e.g., 2010 + 1 = 2011
+                const ayEndYearFull = startYear + 2; // e.g., 2010 + 2 = 2012
+                let ayEndYearShort = (ayEndYearFull % 100).toString(); // "12"
+                if (ayEndYearShort.length === 1) {
+                    ayEndYearShort = '0' + ayEndYearShort;
+                }
+
+                const assessmentYear = `${ayStartYear}-${ayEndYearShort}`;
+                console.log("Calculated Assessment Year:", assessmentYear);
+
+                if (ayField.tagName.toLowerCase() === 'select') {
+                    let found = false;
+                    for (let option of ayField.options) {
+                        if (option.value === assessmentYear || option.text === assessmentYear) {
+                            ayField.value = option.value;
+                            found = true;
+                            console.log("Assessment Year select updated to:", ayField.value);
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        console.warn("Assessment Year not found in select options.");
+                    }
+                } else if (ayField.tagName.toLowerCase() === 'input') {
+                    ayField.value = assessmentYear;
+                    console.log("Assessment Year input updated to:", ayField.value);
+                }
+            }
+        }
+    }
+}
+
+window.addEventListener('load', updateAssessmentYear);
+document.addEventListener('DOMContentLoaded', function () {
+    const fySelect = document.getElementById('financial_year');
+    if (fySelect) {
+        fySelect.addEventListener('change', updateAssessmentYear);
+    }
+});
+</script>
 
 {% endblock %}

@@ -84,16 +84,35 @@ WSGI_APPLICATION = 'RCCT.wsgi.application'
 
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'RCCT',
+#         'USER': 'postgres',
+#         'PASSWORD': 'rspc',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'RCCT',
-        'USER': 'postgres',
-        'PASSWORD': 'rspc',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
+
 
 AUTH_USER_MODEL = 'tracker.CustomUser'
 
@@ -151,10 +170,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # settings.py
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
