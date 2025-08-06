@@ -28,6 +28,7 @@
                 
                 <th>Client Name</th>
                 <th>Financial Year</th>
+                <th>Assessment Year</th>
                 <th>Description of Work</th>
 
                 {% if request.user.user_role != "Executive" %}
@@ -62,6 +63,7 @@
                 <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
                 <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
                 <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
+                 <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
 
                 {% if request.user.user_role != "Executive" %}
                     <th><select class="form-control form-control-sm column-filter"><option value="">All</option></select></th>
@@ -106,6 +108,7 @@
                 
                 <td>{{ notice.name_of_client }}</td>
                 <td>{{ notice.financial_year }}</td>
+                <td>{{ notice.asy }}</td>
                 <td>{{ notice.description_of_work }}</td>
 
                 {% if request.user.user_role != "Executive" %}

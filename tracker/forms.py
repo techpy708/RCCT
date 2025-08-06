@@ -46,7 +46,10 @@ def generate_financial_year_choices(start_year=2010, years_ahead=50):
 
 class NoticeComplianceForm(forms.ModelForm):
     financial_year = forms.ChoiceField(choices=generate_financial_year_choices())
-    client_selection = forms.ChoiceField(label="Client", choices=[])
+    client_selection = forms.CharField(
+            label="Client",
+            widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'client_selection_input'})
+        )
     group_selection = forms.ChoiceField(label="Group Code", choices=[])
 
     class Meta:

@@ -3,6 +3,16 @@
 {% load widget_tweaks %}
 {% block content %}
 
+
+<style>
+  #client_selection_input {
+    height: 38px;
+    min-height: 38px;
+    flex-shrink: 0;
+  }
+</style>
+
+</script>
 <section class="content">
   <div class="container-fluid">
     {% if messages %}
@@ -67,14 +77,20 @@
               <input type="text" name="group_code" class="form-control" value="{{ form.instance.group_code }}">
             </div> -->
 
-            <div class="form-group col-md-4">
-                <label for="id_client_selection">Client</label>
-                {{ form.client_selection|add_class:"form-control" }}
-                {% if form.client_selection.errors %}
-                  <small class="text-danger">{{ form.client_selection.errors|striptags }}</small>
-                {% endif %}
-
+            <div class="form-group col-md-4 d-flex flex-column">
+              <label for="client_selection_input">Client</label>
+              <select id="client_selection_input" name="client_selection" class="form-control form-control-lg">
+                {% for value, label in form.fields.client_selection.choices %}
+                  {% if value %}
+                    <option value="{{ value }}" {% if form.initial.client_selection == value %}selected{% endif %}>{{ label }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
             </div>
+
+            
+
+
 
             <div class="form-group col-md-4">
                 <label for="id_group_selection">Group Code</label>
@@ -239,6 +255,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // On page load (for edit form)
         updateGroupCodeFromClient();
     }
+
+    
 });
 </script>
 
@@ -302,5 +320,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+
+<script>
+  $(document).ready(function () {
+    const $clientSelect = $('#client_selection_input');
+    const $groupSelect = $('#id_group_selection');
+
+    $clientSelect.select2({
+      tags: true,
+      placeholder: 'Select or type a client',
+      width: '100%'
+    });
+
+    function updateGroupFromClient(value) {
+      if (value.includes('|||')) {
+        const parts = value.split('|||');
+        const groupCode = parts[2];
+
+        // Update group code field
+        $groupSelect.val(groupCode).trigger('change');
+      }
+    }
+
+    // Handle selection from list or custom entry
+    $clientSelect.on('change', function (e) {
+      const selectedVal = $(this).val();
+      updateGroupFromClient(selectedVal);
+    });
+
+    // Run on page load too (e.g. edit form)
+    const initialVal = $clientSelect.val();
+    if (initialVal) {
+      updateGroupFromClient(initialVal);
+    }
+  });
+</script>
+
+
 
 {% endblock %}
